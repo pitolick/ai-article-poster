@@ -2,11 +2,11 @@
 
 ## プロジェクト概要
 
-「ええこみ！」ブログ（`e-comi.pitolick.com`）で使用する **汎用 AI 記事生成・WordPress 投稿プラグイン**。
+AI 記事生成パイプラインの汎用 TypeScript ライブラリ。Claude API でデータを Markdown 記事に変換する責務を持つ。
 
-- **ecomi リポジトリのサブモジュール**として `plugins/ai-article-poster/` に配置される
-- トリガーの種類を問わず記事生成・投稿を担う。ええこみ固有のロジックは含めない
-- Claude API（`claude-sonnet-4-6`）を使って SEO 最適化記事を生成し、WordPress REST API で投稿する
+- **e-comi リポジトリ**（`pitolick/ecomi`）のサブモジュールとして `plugins/ai-article-poster/` に配置される
+- トリガーの種類（DMM セール検知・新刊・手動依頼）を問わず記事生成を担う汎用ライブラリ
+- WordPress への投稿は別サブモジュール `pitolick/wp-poster` に委譲する
 
 Issue の起票・Claude Code GitHub Actions の起動は **`pitolick/ecomi` リポジトリで行う**。
 
@@ -14,122 +14,62 @@ Issue の起票・Claude Code GitHub Actions の起動は **`pitolick/ecomi` リ
 
 ## このリポジトリの責務
 
-| クラス | 役割 |
-|--------|------|
-| `src/ArticleGenerator.php` | Claude API を呼び出して記事コンテンツを生成 |
-| `src/PostPublisher.php` | 生成コンテンツを WordPress に投稿（下書き or 即時公開） |
-| `src/WebhookEndpoint.php` | REST API Webhook を公開（外部からのトリガー受付） |
-| `src/Settings.php` | Claude API キーを WP 管理画面で設定・DB 暗号化保存 |
-
----
-
-## ディレクトリ構成
-
-```
-ai-article-poster/
-├── CLAUDE.md
-├── composer.json
-├── grumphp.yml
-├── phpcs.xml
-├── .php-cs-fixer.php
-├── phpunit.xml
-├── .coderabbit.yaml
-├── .env.example
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml
-│   │   └── auto-merge.yml
-│   ├── dependabot.yml
-│   └── pull_request_template.md
-├── src/
-│   ├── ArticleGenerator.php
-│   ├── PostPublisher.php
-│   ├── WebhookEndpoint.php
-│   └── Settings.php
-├── tests/
-│   └── Unit/
-├── vendor/
-└── ai-article-poster.php
-```
-
----
-
-## REST API エンドポイント仕様
-
-```
-POST /wp-json/ai-article-poster/v1/generate
-```
-
-**リクエストボディ**
-
-```json
-{
-  "type": "sale",
-  "context": {
-    "title": "〇〇 Kindle セール",
-    "items": [ ... ]
-  }
-}
-```
-
-`type` に応じてプロンプトテンプレートを切り替える。現在対応するタイプ:
-
-| type | 説明 |
-|------|------|
-| `sale` | DMM / Kindle セールまとめ記事 |
-| `new_release` | 新刊紹介記事 |
-| `manual` | 手動指定（context に記事の指示を渡す） |
+| モジュール | 役割 |
+|---|---|
+| `src/generator.ts` | Claude API 呼出（Anthropic API キー or Claude Code OAuth Token の両対応） |
+| `src/prompts/sale.ts` | セール記事プロンプトテンプレ（汎用） |
+| `src/prompts/new-release.ts` | 新刊記事プロンプトテンプレ（汎用） |
+| `src/prompts/manual.ts` | 手動指定記事プロンプトテンプレ（汎用） |
+| `src/pipeline.ts` | 入力 → プロンプト適用 → Claude 呼出 → MD 出力 |
+| `src/cache.ts` | Anthropic prompt caching の有効化 |
 
 ---
 
 ## 重要な設計制約
 
-### 記事への affilicard 埋め込み
+### Claude 認証の抽象化
 
-記事中に商品カードを挿入する場合は必ずショートコードを使う。Gutenberg ブロックは使わない。
+API キー（従量課金）と Claude Code OAuth Token（既存サブスク）の両方をサポートする:
 
+```typescript
+interface ClaudeAuth {
+  type: 'api' | 'oauth';
+  apiKey?: string;
+  oauthToken?: string;
+}
 ```
-[affilicard id="123"]
-```
 
-### 投稿モード
+呼び出し側が `auth` を渡して、内部でクライアント初期化方式を切り替える。
 
-`PostPublisher.php` は設定で投稿モードを切り替えられるように実装する。
+### サイト固有ロジック禁止
 
-| モード | 動作 |
-|--------|------|
-| `draft` | 下書きとして保存。重要記事は人間がレビュー後に公開 |
-| `publish` | 即時公開 |
-| `scheduled` | 指定日時に予約公開 |
+- e-comi 固有のプロンプト・ロジックを混入させない
+- 各 `type` のプロンプトはデフォルトテンプレを提供し、`customPrompt` で呼び出し側が上書き可能にする
 
-### Claude API モデル
+### モデル
 
 `claude-sonnet-4-6` を使用する（最新安定版モデル）。
-
-### API キー管理
-
-Claude API キーは WordPress 管理画面（`設定 > AI Article Poster`）から設定し、AES-256-CBC で暗号化して DB に保存する。コードにハードコードしない。
 
 ---
 
 ## 技術スタック
 
 | 項目 | 採用技術 |
-|------|---------|
-| 言語 | PHP 8.1 |
-| AI | Claude API（Anthropic） |
-| テスト | PHPUnit + WP_Mock（Claude API はモック） |
-| Lint | PHP_CodeSniffer（WordPress Coding Standards） |
-| フォーマット | PHP CS Fixer |
-| Git フック | GrumPHP |
+|---|---|
+| 言語 | TypeScript 5.6+ |
+| ランタイム | Node.js 20+ (ESM) |
+| AI | Claude API（Anthropic 公式 TS SDK） |
+| テスト | Vitest（Claude API はモック） |
+| Lint | ESLint 9 (flat config) |
+| Formatter | Prettier 3 |
 
 ---
 
 ## 開発ルール
 
-- コミットメッセージ・PR・Issue はすべて日本語で記述する
+- コミットメッセージ・PR・Issue はすべて日本語で記述
 - Claude API を呼び出す処理は必ずモックを用意してテスト可能にする
-- ええこみ固有のプロンプト・ロジックを混入させない（`type` ごとのテンプレートは設定 or 外部から渡す設計にする）
+- 公開 API はすべて TypeScript の型をエクスポート
 
 ### コミットメッセージ形式
 
@@ -139,23 +79,22 @@ fix: 〇〇のバグを修正
 chore: ライブラリを更新
 test: テストを追加・修正
 refactor: 〇〇をリファクタリング
-style: フォーマット修正
+docs: ドキュメントを更新
 ```
 
 ---
 
 ## 仕様書の場所
 
-| ドキュメント | 参照すべきセクション |
-|------------|------------------|
-| Cowork: `docs/01_企画・要件定義.md` | §4-6（AI 記事生成プラグイン仕様）・§4-8（記事自動生成フロー） |
-| Cowork: `docs/02_プラグイン開発・運用手順書.md` | §5（API キー管理）・§6（テスト）・§7（lint） |
+設計の全体像は親リポジトリの以下を参照:
+
+- `pitolick/ecomi`: `docs/superpowers/specs/2026-05-13-ai-plugins-detach-from-wp-design.md`（§4-2 ai-article-poster の責務）
 
 ---
 
 ## 関連リポジトリ
 
 | リポジトリ | 関係 |
-|-----------|------|
+|---|---|
 | `pitolick/ecomi` | 親リポジトリ（Issue 起票・トリガー送信元） |
-| `pitolick/affilicard` | `[affilicard id="xxx"]` ショートコードを記事に埋め込む先 |
+| `pitolick/wp-poster` | WordPress 投稿機構を委譲する先（submodule として利用） |
