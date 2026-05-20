@@ -10,7 +10,7 @@ AI 記事生成パイプラインの汎用 TypeScript ライブラリ。Claude A
 
 ## ステータス
 
-骨組みのみ。実装は Phase 2（[`pitolick/ecomi`](https://github.com/pitolick/ecomi) の plan 参照）で進める。
+骨組みのみ。実装は順次進める。
 
 ## ライセンス
 

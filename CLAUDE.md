@@ -1,14 +1,15 @@
-# CLAUDE.md — pitolick/ai-article-poster
+# CLAUDE.md — ai-article-poster
 
 ## プロジェクト概要
 
 AI 記事生成パイプラインの汎用 TypeScript ライブラリ。Claude API でデータを Markdown 記事に変換する責務を持つ。
 
-- **e-comi リポジトリ**（`pitolick/ecomi`）のサブモジュールとして `plugins/ai-article-poster/` に配置される
-- トリガーの種類（DMM セール検知・新刊・手動依頼）を問わず記事生成を担う汎用ライブラリ
-- WordPress への投稿は別サブモジュール `pitolick/wp-poster` に委譲する
+- 複数の WordPress 投稿プロジェクトから submodule として利用される想定
+- トリガーの種類（セール検知・新刊・手動依頼）を問わず記事生成を担う汎用ライブラリ
+- WordPress への投稿は別ライブラリ（`@pitolick/wp-poster` 等）に委譲する
+- 単独で `npm test` / `npm run typecheck` が成立する自己完結リポジトリ
 
-Issue の起票・Claude Code GitHub Actions の起動は **`pitolick/ecomi` リポジトリで行う**。
+Issue の起票・Claude Code GitHub Actions の起動は通常、利用側の親リポジトリで行う（このライブラリは PR レビューのみ）。
 
 ---
 
@@ -43,7 +44,7 @@ interface ClaudeAuth {
 
 ### サイト固有ロジック禁止
 
-- e-comi 固有のプロンプト・ロジックを混入させない
+- 特定サイト固有のプロンプト・ロジックを混入させない
 - 各 `type` のプロンプトはデフォルトテンプレを提供し、`customPrompt` で呼び出し側が上書き可能にする
 
 ### モデル
@@ -86,15 +87,4 @@ docs: ドキュメントを更新
 
 ## 仕様書の場所
 
-設計の全体像は親リポジトリの以下を参照:
-
-- `pitolick/ecomi`: `docs/superpowers/specs/2026-05-13-ai-plugins-detach-from-wp-design.md`（§4-2 ai-article-poster の責務）
-
----
-
-## 関連リポジトリ
-
-| リポジトリ | 関係 |
-|---|---|
-| `pitolick/ecomi` | 親リポジトリ（Issue 起票・トリガー送信元） |
-| `pitolick/wp-poster` | WordPress 投稿機構を委譲する先（submodule として利用） |
+設計の全体像は利用側プロジェクトの設計書を参照する。このリポジトリ単体での公開仕様は README.md と `src/types.ts` の TSDoc に集約する。
