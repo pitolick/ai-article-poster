@@ -12,11 +12,7 @@ export async function generate(options: GenerateOptions): Promise<GenerateResult
   return runGenerate(options);
 }
 
-export type {
-  ClaudeAuth,
-  GenerateOptions,
-  GenerateResult,
-} from './types.js';
+export type { ClaudeAuth, GenerateOptions, GenerateResult } from './types.js';
 export { DEFAULT_MODEL, DEFAULT_MAX_TOKENS } from './types.js';
 export { AIArticlePosterError, ClaudeRequestError } from './errors.js';
 export { createClient, callClaude } from './generator.js';

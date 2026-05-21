@@ -94,21 +94,27 @@ const result = await generate({ system, prompt, auth });
 
 ### `GenerateOptions`
 
-| プロパティ | 型 | 必須 | 説明 |
-|---|---|---|---|
-| `prompt` | `string` | ✅ | user プロンプト |
-| `system` | `string` | | system プロンプト（指定すると prompt caching 対象になる） |
-| `auth` | `ClaudeAuth` | ✅ | 認証情報 |
-| `model` | `string` | | デフォルト `claude-sonnet-4-6` |
-| `maxTokens` | `number` | | デフォルト `4096` |
-| `clientFactory` | `(auth) => Anthropic` | | テスト用クライアント差し込み |
+| プロパティ      | 型                    | 必須 | 説明                                                      |
+| --------------- | --------------------- | ---- | --------------------------------------------------------- |
+| `prompt`        | `string`              | ✅   | user プロンプト                                           |
+| `system`        | `string`              |      | system プロンプト（指定すると prompt caching 対象になる） |
+| `auth`          | `ClaudeAuth`          | ✅   | 認証情報                                                  |
+| `model`         | `string`              |      | デフォルト `claude-sonnet-4-6`                            |
+| `maxTokens`     | `number`              |      | デフォルト `4096`                                         |
+| `clientFactory` | `(auth) => Anthropic` |      | テスト用クライアント差し込み                              |
 
 ### `ClaudeAuth`
 
 ```typescript
-{ type: 'api'; apiKey: string }
+{
+  type: 'api';
+  apiKey: string;
+}
 // or
-{ type: 'oauth'; oauthToken: string }
+{
+  type: 'oauth';
+  oauthToken: string;
+}
 ```
 
 ### `GenerateResult`

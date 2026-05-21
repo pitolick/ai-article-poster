@@ -53,11 +53,7 @@ export async function callClaude(
   const first = (response as unknown as { content?: Array<{ type: string; text?: string }> })
     .content?.[0];
   if (!first || first.type !== 'text' || typeof first.text !== 'string') {
-    throw new ClaudeRequestError(
-      'Claude API response did not contain a text block',
-      0,
-      response,
-    );
+    throw new ClaudeRequestError('Claude API response did not contain a text block', 0, response);
   }
 
   const usage = (response as unknown as { usage?: Record<string, number> }).usage;
