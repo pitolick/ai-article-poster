@@ -4,8 +4,7 @@ import * as generator from '../src/generator.js';
 import type { GenerateOptions } from '../src/types.js';
 
 vi.mock('../src/generator.js', async () => {
-  const actual =
-    await vi.importActual<typeof import('../src/generator.js')>('../src/generator.js');
+  const actual = await vi.importActual<typeof import('../src/generator.js')>('../src/generator.js');
   return {
     ...actual,
     createClient: vi.fn(),

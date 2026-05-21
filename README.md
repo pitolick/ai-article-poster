@@ -21,13 +21,24 @@ WordPress 投稿は別ライブラリ（[`@pitolick/wp-poster`](https://github.c
 
 ## インストール
 
-このリポジトリは npm に publish しない。利用側で submodule として取り込む:
+このリポジトリは npm に publish しない（`"private": true`）。利用側で submodule として取り込み、親リポジトリの npm workspaces 経由で利用する:
 
 ```bash
+# 親リポジトリで submodule を追加
 git submodule add https://github.com/pitolick/ai-article-poster.git plugins/ai-article-poster
+
+# 親リポジトリの package.json の workspaces に登録
+# {
+#   "workspaces": ["plugins/ai-article-poster", "..."]
+# }
+
+# 親リポジトリで npm install（@anthropic-ai/sdk 等の依存もまとめて解決される）
+npm install
 ```
 
-親リポジトリの npm workspaces で依存解決される（本ライブラリ自体は `@anthropic-ai/sdk` を `dependencies` に持つ）。
+利用側コードからは `@pitolick/ai-article-poster` で import できる（workspaces で解決されるため別途 npm publish は不要）。本ライブラリ自体は `@anthropic-ai/sdk` を `dependencies` に持つ。
+
+スタンドアロン利用（workspace 外）はサポートしない。
 
 ## 使い方
 
