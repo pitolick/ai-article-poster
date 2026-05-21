@@ -1,5 +1,13 @@
 # ai-article-poster
 
+> ⚠️ **このリポジトリは Archived 状態です（2026-05-22）。**
+> 本ライブラリの責務は [`@pitolick/wp-poster`](https://github.com/pitolick/wp-poster) の draft sub-export（`@pitolick/wp-poster/draft`）に統合されました。
+> 詳細は [`pitolick/ecomi` の Routines Pivot Design](https://github.com/pitolick/ecomi/blob/main/docs/superpowers/specs/2026-05-21-routines-pivot-design.md) を参照してください。
+>
+> 経緯: 2026-05-21 の実 API スモークテストで、Claude Code OAuth Token を Anthropic SDK の `authToken` オプションで使う経路は Anthropic のポリシーにより 429 でスロットリングされることが判明。代替として Claude Routines（claude.ai/code/routines、サブスク内で動くクラウド agent）+ filmlog-ai 互換の post-to-wp パターンに pivot し、本ライブラリの責務は消滅しました。
+
+---
+
 Claude API（Anthropic 公式 SDK）を呼び出して **Markdown 記事を生成** する汎用 TypeScript ライブラリ。
 
 WordPress 投稿は別ライブラリ（[`@pitolick/wp-poster`](https://github.com/pitolick/wp-poster)）に委譲する。
