@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import AnthropicSDK from '@anthropic-ai/sdk';
+import type Anthropic from '@anthropic-ai/sdk';
 import type { ClaudeAuth, GenerateResult } from './types.js';
 import { ClaudeRequestError } from './errors.js';
 import { withCacheControl } from './cache.js';
@@ -9,12 +10,12 @@ export function createClient(auth: ClaudeAuth): Anthropic {
     if (!auth.apiKey) {
       throw new Error('apiKey is required when auth.type === "api"');
     }
-    return new Anthropic({ apiKey: auth.apiKey });
+    return new AnthropicSDK({ apiKey: auth.apiKey });
   }
   if (!auth.oauthToken) {
     throw new Error('oauthToken is required when auth.type === "oauth"');
   }
-  return new Anthropic({ authToken: auth.oauthToken });
+  return new AnthropicSDK({ authToken: auth.oauthToken });
 }
 
 export interface CallClaudeOptions {
@@ -31,7 +32,7 @@ export async function callClaude(
 ): Promise<GenerateResult> {
   const systemBlocks = withCacheControl(options.system);
 
-  const requestParams: Record<string, unknown> = {
+  const requestParams: Anthropic.Messages.MessageCreateParamsNonStreaming = {
     model: options.model,
     max_tokens: options.maxTokens,
     messages: [{ role: 'user', content: options.userPrompt }],
@@ -40,9 +41,9 @@ export async function callClaude(
     requestParams.system = systemBlocks;
   }
 
-  let response: Awaited<ReturnType<Anthropic['messages']['create']>>;
+  let response: Anthropic.Messages.Message;
   try {
-    response = await client.messages.create(requestParams as never);
+    response = await client.messages.create(requestParams);
   } catch (cause) {
     const status = (cause as { status?: number })?.status ?? 0;
     const body = (cause as { error?: unknown })?.error ?? null;
@@ -50,24 +51,23 @@ export async function callClaude(
     throw new ClaudeRequestError(`Claude API request failed: ${message}`, status, body, cause);
   }
 
-  const first = (response as unknown as { content?: Array<{ type: string; text?: string }> })
-    .content?.[0];
-  if (!first || first.type !== 'text' || typeof first.text !== 'string') {
+  const first = response.content[0];
+  if (!first || first.type !== 'text') {
     throw new ClaudeRequestError('Claude API response did not contain a text block', 0, response);
   }
 
-  const usage = (response as unknown as { usage?: Record<string, number> }).usage;
+  const usage = response.usage as Anthropic.Messages.Usage | undefined;
   return {
     markdown: first.text,
-    model: (response as { model?: string }).model ?? options.model,
+    model: response.model ?? options.model,
     usage: usage
       ? {
-          inputTokens: usage.input_tokens ?? 0,
-          outputTokens: usage.output_tokens ?? 0,
-          ...(usage.cache_read_input_tokens !== undefined
+          inputTokens: usage.input_tokens,
+          outputTokens: usage.output_tokens,
+          ...(usage.cache_read_input_tokens != null
             ? { cacheReadInputTokens: usage.cache_read_input_tokens }
             : {}),
-          ...(usage.cache_creation_input_tokens !== undefined
+          ...(usage.cache_creation_input_tokens != null
             ? { cacheCreationInputTokens: usage.cache_creation_input_tokens }
             : {}),
         }
