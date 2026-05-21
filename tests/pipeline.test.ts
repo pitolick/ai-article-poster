@@ -1,6 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import { runGenerate } from '../src/pipeline.js';
+import * as generator from '../src/generator.js';
 import type { GenerateOptions } from '../src/types.js';
+
+vi.mock('../src/generator.js', async () => {
+  const actual = await vi.importActual<typeof import('../src/generator.js')>('../src/generator.js');
+  return {
+    ...actual,
+    createClient: vi.fn(),
+  };
+});
 
 type FakeClient = {
   messages: { create: ReturnType<typeof vi.fn> };
@@ -80,5 +89,18 @@ describe('runGenerate', () => {
       clientFactory: factory,
     });
     expect(factory).toHaveBeenCalledWith({ type: 'oauth', oauthToken: 'tok' });
+  });
+
+  it('clientFactory 未指定なら createClient(auth) を経由する', async () => {
+    const fake = makeFakeClient();
+    vi.mocked(generator.createClient).mockReturnValue(fake as never);
+
+    await runGenerate({
+      prompt: 'q',
+      auth: { type: 'api', apiKey: 'sk-test' },
+    });
+
+    expect(generator.createClient).toHaveBeenCalledWith({ type: 'api', apiKey: 'sk-test' });
+    expect(fake.messages.create).toHaveBeenCalledOnce();
   });
 });

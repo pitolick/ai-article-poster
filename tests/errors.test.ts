@@ -25,4 +25,9 @@ describe('ClaudeRequestError', () => {
     expect(err.cause).toBe(cause);
     expect(err.name).toBe('ClaudeRequestError');
   });
+
+  it('cause 未指定なら cause は undefined', () => {
+    const err = new ClaudeRequestError('boom', 500, null);
+    expect(err.cause).toBeUndefined();
+  });
 });

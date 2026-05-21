@@ -1,6 +1,6 @@
 export class AIArticlePosterError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'AIArticlePosterError';
   }
 }
@@ -8,13 +8,11 @@ export class AIArticlePosterError extends Error {
 export class ClaudeRequestError extends AIArticlePosterError {
   readonly status: number;
   readonly body: unknown;
-  readonly cause?: unknown;
 
   constructor(message: string, status: number, body: unknown, cause?: unknown) {
-    super(message);
+    super(message, cause !== undefined ? { cause } : undefined);
     this.name = 'ClaudeRequestError';
     this.status = status;
     this.body = body;
-    this.cause = cause;
   }
 }
