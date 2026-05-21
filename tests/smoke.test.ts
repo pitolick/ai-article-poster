@@ -1,9 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { AI_ARTICLE_POSTER_VERSION } from '../src/index.js';
+import * as api from '../src/index.js';
 
-describe('ai-article-poster smoke test', () => {
-  it('exports a version string', () => {
-    expect(typeof AI_ARTICLE_POSTER_VERSION).toBe('string');
-    expect(AI_ARTICLE_POSTER_VERSION).toBe('0.0.0');
+describe('public API smoke', () => {
+  it('主要シンボルが export されている', () => {
+    expect(typeof api.generate).toBe('function');
+    expect(typeof api.runGenerate).toBe('function');
+    expect(typeof api.createClient).toBe('function');
+    expect(typeof api.callClaude).toBe('function');
+    expect(typeof api.withCacheControl).toBe('function');
+    expect(api.DEFAULT_MODEL).toBe('claude-sonnet-4-6');
+    expect(api.DEFAULT_MAX_TOKENS).toBe(4096);
   });
 });
